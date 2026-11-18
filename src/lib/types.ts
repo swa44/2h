@@ -22,5 +22,10 @@ export type MeetingWithPhotos = Meeting & { photos: Photo[] };
 
 export type Plan = { id: string; date: string; memo: string | null };
 
-export type Settings = { partner_name: string | null; start_date: string | null; reveal_days: number };
+export type Settings = {
+  partner_name: string | null;
+  start_date: string | null;
+  reveal_days: number;
+  reveal_mode: "days" | "next_plan";
+};
 

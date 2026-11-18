@@ -3,38 +3,53 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { formatDateLong } from "@/lib/date";
 import { HeartIcon } from "./icons";
 
-type Ctx = (revealOn: string) => void;
+/** revealOn: 공개일, null이면 다음 약속 대기 */
+type Ctx = (revealOn: string | null) => void;
 const LockedCtx = createContext<Ctx>(() => {});
 export const useLockedNotice = () => useContext(LockedCtx);
 
 /** 공개 전 기록을 눌렀을 때 뜨는 안내창 */
 export function LockedNoticeProvider({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
   const [revealOn, setRevealOn] = useState<string | null>(null);
-  const show = useCallback((d: string) => setRevealOn(d), []);
+  const show = useCallback((d: string | null) => {
+    setRevealOn(d);
+    setOpen(true);
+  }, []);
 
   useEffect(() => {
-    if (!revealOn) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setRevealOn(null);
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [revealOn]);
+  }, [open]);
 
   return (
     <LockedCtx value={show}>
       {children}
-      {revealOn && (
+      {open && (
         <div className="fixed inset-0 z-50 grid place-items-center px-8" role="dialog" aria-modal>
-          <button aria-label="닫기" className="absolute inset-0 bg-black/30" onClick={() => setRevealOn(null)} />
+          <button aria-label="닫기" className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
           <div className="relative w-full max-w-xs rounded-3xl bg-surface px-6 py-7 text-center shadow-2xl">
             <HeartIcon filled className="mx-auto h-9 w-9 text-accent" />
             <p className="mt-3 font-serif text-lg font-bold">아직 볼 수 없어요</p>
             <p className="mt-2 text-sm leading-relaxed text-muted">
-              이 기록은
-              <br />
-              <b className="text-ink">{formatDateLong(revealOn)}</b>에 열려요
+              {revealOn ? (
+                <>
+                  이 기록은
+                  <br />
+                  <b className="text-ink">{formatDateLong(revealOn)}</b>에 열려요
+                </>
+              ) : (
+                <>
+                  다음 만날 약속이 잡히면
+                  <br />
+                  <b className="text-ink">그 전날</b> 열려요
+                </>
+              )}
             </p>
             <button
-              onClick={() => setRevealOn(null)}
+              onClick={() => setOpen(false)}
               className="mt-5 h-11 w-full rounded-2xl bg-accent text-sm font-bold text-accent-ink"
             >
               기다릴게요
@@ -56,9 +71,9 @@ export function LockedCard({
 }: {
   date: string;
   title: string | null;
-  revealOn: string;
+  revealOn: string | null;
   dateLabel: string;
-  dday: number;
+  dday: number | null;
 }) {
   const show = useLockedNotice();
   return (
@@ -70,7 +85,7 @@ export function LockedCard({
       <div className="relative aspect-[4/3] overflow-hidden">
         <div aria-hidden className="absolute inset-0 scale-110 bg-gradient-to-br from-accent-soft via-[#efd9cf] to-plan-soft blur-md" />
         <div className="absolute inset-0 grid place-items-center">
-          <span className="rounded-full bg-accent px-3.5 py-1.5 text-sm font-bold text-accent-ink shadow-sm">D-{dday} 공개</span>
+          <span className="rounded-full bg-accent px-3.5 py-1.5 text-sm font-bold text-accent-ink shadow-sm">{dday === null ? "다음 약속 전날 공개" : dday <= 0 ? "곧 공개" : `D-${dday} 공개`}</span>
         </div>
       </div>
       <div className="p-4">

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { PHOTO_BUCKET } from "@/lib/supabase/env";
 import { compressImage } from "@/lib/image";
-import { isRevealed, revealDate, todayKST, formatDate } from "@/lib/date";
+import { computeRevealOn, formatDate, isOpenOn, todayKST, type RevealMode } from "@/lib/date";
 import { ImageIcon, PinIcon, XIcon } from "./icons";
 import { PageHeader } from "./page-header";
 
@@ -39,14 +39,15 @@ export default function MeetingForm({
   title: headerTitle,
   back,
   footer,
-  revealDays,
+  reveal,
 }: {
   initial?: MeetingFormInitial;
   defaultDate: string;
   title: string;
   back: string;
   footer?: ReactNode;
-  revealDays: number;
+  /** 공개일 안내용: 공개 방식, N일, 약속·다른 기록 날짜 */
+  reveal: { revealMode: RevealMode; revealDays: number; meetDates: string[] };
 }) {
   const leavingRef = useRef(false);
   const isEdit = Boolean(initial);
@@ -138,6 +139,13 @@ export default function MeetingForm({
   );
 
   const touch = () => setDirty(true);
+
+  const revealOnOf = (d: string) => computeRevealOn(d, reveal.revealMode, reveal.revealDays, reveal.meetDates);
+  function revealNote(d: string) {
+    const on = revealOnOf(d);
+    if (on === null) return "다음 약속이 잡히면 그 전날 공개돼요";
+    return isOpenOn(on, todayKST()) ? "바로 공개돼요" : `${formatDate(on)}에 공개돼요`;
+  }
 
   function addFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -258,7 +266,7 @@ export default function MeetingForm({
       leavingRef.current = true;
       setDirty(false);
       setStatus(null);
-      window.location.replace(isEdit ? "/admin" : isRevealed(date, todayKST(), revealDays) ? `/m/${id}` : "/admin");
+      window.location.replace(isEdit ? "/admin" : isOpenOn(revealOnOf(date), todayKST()) ? `/m/${id}` : "/admin");
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 시도해주세요.");
@@ -313,7 +321,7 @@ export default function MeetingForm({
         />
         {date && (
           <span className="mt-1.5 block px-1 text-xs text-muted">
-            {isRevealed(date, todayKST(), revealDays) ? "바로 공개돼요" : `${formatDate(revealDate(date, revealDays))}에 공개돼요`}
+            {revealNote(date)}
           </span>
         )}
       </label>

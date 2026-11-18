@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getMeeting, getSettings } from "@/lib/data";
+import { getMeeting, getRevealContext } from "@/lib/data";
 import MeetingForm from "@/components/meeting-form";
 import { PageHeader } from "@/components/page-header";
 import { BlockSkeleton } from "@/components/skeleton";
@@ -24,7 +24,7 @@ export default function EditPage({ params }: PageProps<"/admin/m/[id]/edit">) {
 async function Edit({ params }: { params: PageProps<"/admin/m/[id]/edit">["params"] }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const [m, settings] = await Promise.all([getMeeting(id, { includeHidden: true }), getSettings()]);
+  const [m, reveal] = await Promise.all([getMeeting(id, { includeHidden: true }), getRevealContext(id)]);
   if (!m) notFound();
   return (
     <main>
@@ -32,7 +32,7 @@ async function Edit({ params }: { params: PageProps<"/admin/m/[id]/edit">["param
         title="기록 수정"
         back="/admin"
         footer={<DeleteMeeting id={m.id} />}
-        revealDays={settings.reveal_days}
+        reveal={reveal}
         defaultDate={m.date}
         initial={{
           id: m.id,

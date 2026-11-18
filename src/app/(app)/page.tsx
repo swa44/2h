@@ -127,7 +127,7 @@ function Timeline({ items, locked, today }: { items: TimelineItem[]; locked: Loc
                     title={e.l.title}
                     revealOn={e.l.revealOn}
                     dateLabel={formatDate(e.l.date)}
-                    dday={daysBetween(today, e.l.revealOn)}
+                    dday={e.l.revealOn ? daysBetween(today, e.l.revealOn) : null}
                   />
                 </li>
               ),

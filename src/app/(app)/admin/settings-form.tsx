@@ -7,15 +7,18 @@ export default function SettingsForm({
   partnerName,
   startDate,
   revealDays,
+  revealMode,
 }: {
   partnerName: string;
   startDate: string;
   revealDays: number;
+  revealMode: "days" | "next_plan";
 }) {
   const router = useRouter();
   const [name, setName] = useState(partnerName);
   const [start, setStart] = useState(startDate);
   const [days, setDays] = useState(String(revealDays));
+  const [mode, setMode] = useState(revealMode);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -34,12 +37,15 @@ export default function SettingsForm({
       partner_name: name.trim() || null,
       start_date: start || null,
       reveal_days: n,
+      reveal_mode: mode,
       updated_at: new Date().toISOString(),
     });
     setBusy(false);
     setMsg(
       error
-        ? error.message.includes("reveal_days")
+        ? error.message.includes("reveal_mode")
+          ? "Supabase에서 supabase/migrations_reveal_mode.sql 을 먼저 실행해주세요."
+          : error.message.includes("reveal_days")
           ? "Supabase에서 supabase/migrations_reveal_days.sql 을 먼저 실행해주세요."
           : "저장하지 못했어요."
         : "저장했어요.",
@@ -74,21 +80,46 @@ export default function SettingsForm({
             className="h-12 w-full rounded-2xl border border-line bg-bg px-4 outline-none focus:border-accent"
           />
         </label>
-        <label className="block">
-          <span className="mb-1.5 block text-[13px] font-bold text-muted">공개까지 기다리는 날</span>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={365}
-              value={days}
-              onChange={(e) => setDays(e.target.value)}
-              className="h-12 w-24 rounded-2xl border border-line bg-bg px-4 text-center outline-none focus:border-accent"
-            />
-            <span className="text-sm text-muted">일 뒤에 공개 (만난 날 기준, 0이면 바로)</span>
+        <div>
+          <span className="mb-1.5 block text-[13px] font-bold text-muted">기록 공개 방식</span>
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                ["days", "N일 뒤 공개"],
+                ["next_plan", "다음 만남 전날"],
+              ] as const
+            ).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setMode(v)}
+                className={`h-11 rounded-2xl border text-sm font-bold ${
+                  mode === v ? "border-accent bg-accent text-accent-ink" : "border-line bg-bg text-ink"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-        </label>
+          {mode === "days" ? (
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={365}
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                className="h-12 w-24 rounded-2xl border border-line bg-bg px-4 text-center outline-none focus:border-accent"
+              />
+              <span className="text-sm text-muted">일 뒤에 공개 (만난 날 기준, 0이면 바로)</span>
+            </div>
+          ) : (
+            <p className="mt-2 px-1 text-sm text-muted">
+              기록 다음에 잡힌 가장 가까운 약속의 전날 공개돼요. 약속이 없으면 잡힐 때까지 잠겨 있어요.
+            </p>
+          )}
+        </div>
         <button
           onClick={save}
           disabled={busy}

@@ -3,7 +3,7 @@ import MeetingForm from "@/components/meeting-form";
 import { BlockSkeleton } from "@/components/skeleton";
 import { PageHeader } from "@/components/page-header";
 import { todayKST } from "@/lib/date";
-import { getSettings } from "@/lib/data";
+import { getRevealContext } from "@/lib/data";
 
 export default function WritePage({ searchParams }: PageProps<"/admin/write">) {
   return (
@@ -16,7 +16,7 @@ export default function WritePage({ searchParams }: PageProps<"/admin/write">) {
 }
 
 async function Form({ searchParams }: { searchParams: PageProps<"/admin/write">["searchParams"] }) {
-  const [sp, settings] = await Promise.all([searchParams, getSettings()]);
+  const [sp, reveal] = await Promise.all([searchParams, getRevealContext()]);
   const d = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : todayKST();
-  return <MeetingForm defaultDate={d} title="오늘의 기록" back="/admin" revealDays={settings.reveal_days} />;
+  return <MeetingForm defaultDate={d} title="오늘의 기록" back="/admin" reveal={reveal} />;
 }

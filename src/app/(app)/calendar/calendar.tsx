@@ -187,7 +187,7 @@ export default function Calendar({
                   <li key={x.id} className="flex items-center gap-2 rounded-2xl bg-surface px-4 py-3">
                     <HeartIcon className="h-4 w-4 shrink-0 text-accent/60" />
                     <span className="flex-1 truncate text-sm font-bold">{x.title || "그날의 기록"}</span>
-                    <span className="shrink-0 text-xs text-accent">{formatDate(x.revealOn)}에 열려요</span>
+                    <span className="shrink-0 text-xs text-accent">{x.revealOn ? `${formatDate(x.revealOn)}에 열려요` : "다음 약속 전날 열려요"}</span>
                   </li>
                 ))}
               </ul>
