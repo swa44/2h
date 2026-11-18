@@ -1,11 +1,9 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { idToEmail } from "@/lib/config";
 
 export default function LoginForm() {
-  const router = useRouter();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -15,14 +13,25 @@ export default function LoginForm() {
     e.preventDefault();
     setPending(true);
     setError(null);
-    const { error } = await supabaseBrowser().auth.signInWithPassword({ email: idToEmail(loginId), password });
+    let error: { code?: string; message: string } | null = null;
+    try {
+      ({ error } = await supabaseBrowser().auth.signInWithPassword({ email: idToEmail(loginId), password }));
+    } catch (e) {
+      error = { code: "network", message: e instanceof Error ? e.message : String(e) };
+    }
     if (error) {
-      setError("아이디 또는 비밀번호가 맞지 않아요.");
+      const msg =
+        error.code === "invalid_credentials"
+          ? `아이디 또는 비밀번호가 맞지 않아요. (${idToEmail(loginId)})`
+          : error.code === "email_not_confirmed"
+            ? "계정이 아직 확인되지 않았어요. Supabase에서 Auto Confirm으로 다시 만들어주세요."
+            : `로그인 오류: ${error.message}${error.code ? ` [${error.code}]` : ""}`;
+      setError(msg);
       setPending(false);
       return;
     }
-    router.replace("/");
-    router.refresh();
+    // 쿠키가 확실히 반영되도록 전체 새로고침으로 이동
+    window.location.replace("/");
   }
 
   return (
