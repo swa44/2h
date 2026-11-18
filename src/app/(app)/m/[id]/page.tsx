@@ -38,7 +38,6 @@ async function Detail({ params }: { params: PageProps<"/m/[id]">["params"] }) {
         <div className="flex flex-wrap items-center gap-2 text-[13px] text-muted">
           <span>{formatDateLong(m.date)}</span>
           {m.nth && <span>· {m.nth}번째 기록</span>}
-          {m.mood && <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-accent">{m.mood}</span>}
         </div>
         {m.title && <h1 className="mt-2 font-serif text-2xl leading-snug font-bold">{m.title}</h1>}
         {m.place && (

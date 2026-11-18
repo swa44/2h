@@ -157,7 +157,6 @@ function MeetingCard({ m }: { m: TimelineItem }) {
       <div className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted">
           <span>{formatDate(m.date)}</span>
-          {m.mood && <span className="rounded-full bg-accent-soft px-2 py-0.5 text-accent">{m.mood}</span>}
         </div>
         <h3 className="mt-1.5 font-serif text-[17px] font-bold">{heading}</h3>
         {m.place && m.title && (

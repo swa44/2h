@@ -3,7 +3,6 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { PHOTO_BUCKET } from "@/lib/supabase/env";
 import { compressImage } from "@/lib/image";
-import { MOODS } from "@/lib/types";
 import { isRevealed, revealDate, todayKST, formatDate } from "@/lib/date";
 import { ImageIcon, PinIcon, XIcon } from "./icons";
 import { PageHeader } from "./page-header";
@@ -55,6 +54,7 @@ export default function MeetingForm({
   const [date, setDate] = useState(initial?.date ?? defaultDate);
   const [title, setTitle] = useState(initial?.title ?? "");
   const [place, setPlace] = useState(initial?.place ?? "");
+  // "그날의 마음"은 화면에서 뺐지만, 기존 값은 수정 시 그대로 유지
   const [mood, setMood] = useState<string | null>(initial?.mood ?? null);
   const [letter, setLetter] = useState(initial?.letter ?? "");
   const [items, setItems] = useState<Item[]>(
@@ -340,28 +340,6 @@ export default function MeetingForm({
             }}
             className="h-12 w-full rounded-2xl border border-line bg-surface pr-4 pl-10 outline-none focus:border-accent"
           />
-        </div>
-      </div>
-
-      {/* 마음 */}
-      <div className="mt-5">
-        <span className="mb-2 block text-[13px] font-bold text-muted">그날의 마음</span>
-        <div className="flex flex-wrap gap-2">
-          {MOODS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => {
-                setMood(mood === m ? null : m);
-                touch();
-              }}
-              className={`rounded-full border px-3.5 py-1.5 text-sm transition ${
-                mood === m ? "border-accent bg-accent text-accent-ink" : "border-line bg-surface text-ink"
-              }`}
-            >
-              {m}
-            </button>
-          ))}
         </div>
       </div>
 
