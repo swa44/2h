@@ -35,7 +35,7 @@ async function Admin() {
 
       <section>
         <h2 className="mb-2 px-5 text-[13px] font-bold text-muted">기록 관리 · {meetings.length}개</h2>
-        <p className="mb-2 px-5 text-xs text-muted">기록은 만난 날로부터 7일 뒤에 공개돼요</p>
+        <p className="mb-2 px-5 text-xs text-muted">기록은 만난 날로부터 {settings.reveal_days}일 뒤에 공개돼요</p>
         {meetings.length === 0 ? (
           <p className="mx-4 rounded-2xl bg-surface px-4 py-6 text-center text-sm text-muted">아직 기록이 없어요</p>
         ) : (
@@ -45,11 +45,11 @@ async function Admin() {
                 <Link href={`/admin/m/${m.id}/edit`} className="flex items-center gap-3 px-4 py-3 active:bg-line/40">
                   <span className="w-28 shrink-0 text-xs text-muted">{formatDate(m.date)}</span>
                   <span className="flex-1 truncate text-sm">{m.title || m.place || "그날의 기록"}</span>
-                  {isRevealed(m.date, today) ? (
+                  {isRevealed(m.date, today, settings.reveal_days) ? (
                     <span className="text-xs text-accent">수정</span>
                   ) : (
                     <span className="shrink-0 rounded-full bg-plan-soft px-2 py-0.5 text-[11px] font-bold text-plan">
-                      공개 D-{daysBetween(today, revealDate(m.date))}
+                      공개 D-{daysBetween(today, revealDate(m.date, settings.reveal_days))}
                     </span>
                   )}
                   <ChevronRight className="h-4 w-4 text-muted" />
@@ -67,7 +67,7 @@ async function Admin() {
 
       <section>
         <h2 className="mb-2 px-5 text-[13px] font-bold text-muted">설정</h2>
-        <SettingsForm partnerName={settings.partner_name ?? ""} startDate={settings.start_date ?? ""} />
+        <SettingsForm partnerName={settings.partner_name ?? ""} startDate={settings.start_date ?? ""} revealDays={settings.reveal_days} />
       </section>
     </div>
   );

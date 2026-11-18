@@ -17,6 +17,6 @@ export default function CalendarPage() {
 }
 
 async function Data() {
-  const { meetings, plans } = await getCalendarData();
-  return <Calendar today={todayKST()} meetings={meetings} plans={plans} />;
+  const { meetings, locked, plans } = await getCalendarData();
+  return <Calendar today={todayKST()} meetings={meetings} locked={locked} plans={plans} />;
 }

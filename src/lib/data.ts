@@ -3,10 +3,7 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "./supabase/server";
 import { PHOTO_BUCKET } from "./supabase/env";
 import type { MeetingWithPhotos, Plan, Settings } from "./types";
-import { revealCutoff, todayKST } from "./date";
-
-/** 공개된 기록만: 만난 날 + 7일이 지난 것 */
-const cutoff = () => revealCutoff(todayKST());
+import { REVEAL_DAYS, addDays, revealCutoff, todayKST } from "./date";
 
 const SIGN_TTL = 60 * 60 * 6; // 6시간
 
@@ -18,6 +15,31 @@ async function authed() {
 }
 
 type Supa = Awaited<ReturnType<typeof supabaseServer>>;
+
+/** 설정 읽기. reveal_days 컬럼이 아직 없으면(마이그레이션 전) 기본값으로 동작 */
+async function readSettings(supabase: Supa): Promise<Settings> {
+  const full = await supabase.from("twoh_settings").select("partner_name,start_date,reveal_days").maybeSingle();
+  if (!full.error) {
+    const d = full.data as Partial<Settings> | null;
+    return {
+      partner_name: d?.partner_name ?? null,
+      start_date: d?.start_date ?? null,
+      reveal_days: d?.reveal_days ?? REVEAL_DAYS,
+    };
+  }
+  const basic = await supabase.from("twoh_settings").select("partner_name,start_date").maybeSingle();
+  return {
+    partner_name: basic.data?.partner_name ?? null,
+    start_date: basic.data?.start_date ?? null,
+    reveal_days: REVEAL_DAYS,
+  };
+}
+
+/** 공개 기준일: 이 날짜 이하의 기록만 공개 */
+async function cutoffFor(supabase: Supa) {
+  const { reveal_days } = await readSettings(supabase);
+  return revealCutoff(todayKST(), reveal_days);
+}
 
 async function signMany(supabase: Supa, paths: string[]) {
   const map = new Map<string, string>();
@@ -37,28 +59,40 @@ function sortPhotos(m: MeetingWithPhotos) {
 }
 
 export async function getSettings(): Promise<Settings> {
-  const supabase = await authed();
-  const { data } = await supabase.from("twoh_settings").select("partner_name,start_date").maybeSingle();
-  return data ?? { partner_name: null, start_date: null };
+  return readSettings(await authed());
 }
 
 export type TimelineItem = MeetingWithPhotos & { cover: string | null };
+/** 공개 전 기록: 내용은 보내지 않고 날짜만 */
+export type LockedItem = { id: string; date: string; revealOn: string };
 
-export async function getTimeline(): Promise<TimelineItem[]> {
+export async function getTimeline(): Promise<{ items: TimelineItem[]; locked: LockedItem[] }> {
   const supabase = await authed();
-  const { data, error } = await supabase
-    .from("twoh_meetings")
-    .select(MEETING_COLS)
-    .lte("date", cutoff())
-    .order("date", { ascending: false })
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  const meetings = (data as MeetingWithPhotos[]).map(sortPhotos);
+  const settings = await readSettings(supabase);
+  const last = revealCutoff(todayKST(), settings.reveal_days);
+  const [open, hidden] = await Promise.all([
+    supabase
+      .from("twoh_meetings")
+      .select(MEETING_COLS)
+      .lte("date", last)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase.from("twoh_meetings").select("id,date").gt("date", last).order("date", { ascending: false }),
+  ]);
+  if (open.error) throw open.error;
+  const meetings = (open.data as MeetingWithPhotos[]).map(sortPhotos);
   const urls = await signMany(
     supabase,
     meetings.flatMap((m) => (m.photos[0] ? [m.photos[0].thumb_path] : [])),
   );
-  return meetings.map((m) => ({ ...m, cover: m.photos[0] ? urls.get(m.photos[0].thumb_path) ?? null : null }));
+  return {
+    items: meetings.map((m) => ({ ...m, cover: m.photos[0] ? urls.get(m.photos[0].thumb_path) ?? null : null })),
+    locked: ((hidden.data ?? []) as { id: string; date: string }[]).map((h) => ({
+      id: h.id,
+      date: h.date,
+      revealOn: addDays(h.date, settings.reveal_days),
+    })),
+  };
 }
 
 export type SignedPhoto = MeetingWithPhotos["photos"][number] & { url: string; thumbUrl: string };
@@ -67,7 +101,7 @@ export async function getMeeting(id: string, { includeHidden = false } = {}) {
   const supabase = await authed();
   const { data } = await supabase.from("twoh_meetings").select(MEETING_COLS).eq("id", id).maybeSingle();
   if (!data) return null;
-  if (!includeHidden && (data as MeetingWithPhotos).date > cutoff()) return null;
+  if (!includeHidden && (data as MeetingWithPhotos).date > (await cutoffFor(supabase))) return null;
   const m = sortPhotos(data as MeetingWithPhotos);
   const urls = await signMany(supabase, m.photos.flatMap((p) => [p.path, p.thumb_path]));
   const photos: SignedPhoto[] = m.photos.map((p) => ({
@@ -87,12 +121,20 @@ export async function getMeeting(id: string, { includeHidden = false } = {}) {
 
 export async function getCalendarData() {
   const supabase = await authed();
-  const [meetings, plans] = await Promise.all([
-    supabase.from("twoh_meetings").select("id,date,title,place").lte("date", cutoff()).order("date"),
+  const settings = await readSettings(supabase);
+  const last = revealCutoff(todayKST(), settings.reveal_days);
+  const [meetings, hidden, plans] = await Promise.all([
+    supabase.from("twoh_meetings").select("id,date,title,place").lte("date", last).order("date"),
+    supabase.from("twoh_meetings").select("id,date").gt("date", last).order("date"),
     supabase.from("twoh_plans").select("id,date,memo").order("date"),
   ]);
   return {
     meetings: (meetings.data ?? []) as { id: string; date: string; title: string | null; place: string | null }[],
+    locked: ((hidden.data ?? []) as { id: string; date: string }[]).map((h) => ({
+      id: h.id,
+      date: h.date,
+      revealOn: addDays(h.date, settings.reveal_days),
+    })) as LockedItem[],
     plans: (plans.data ?? []) as Plan[],
   };
 }
@@ -131,7 +173,7 @@ export async function getAllPhotos(): Promise<GalleryPhoto[]> {
     created_at: string;
     meeting: GalleryPhoto["meeting"];
   };
-  const last = cutoff();
+  const last = await cutoffFor(supabase);
   const rows = (data as unknown as Row[]).filter((r) => r.meeting.date <= last).sort(
     (a, b) =>
       b.meeting.date.localeCompare(a.meeting.date) ||
@@ -150,7 +192,7 @@ export async function getAllPhotos(): Promise<GalleryPhoto[]> {
 export async function getAdminData() {
   const supabase = await authed();
   const [settings, meetings, plans] = await Promise.all([
-    supabase.from("twoh_settings").select("partner_name,start_date").maybeSingle(),
+    readSettings(supabase),
     supabase
       .from("twoh_meetings")
       .select("id,date,title,place")
@@ -159,7 +201,7 @@ export async function getAdminData() {
     supabase.from("twoh_plans").select("id,date,memo").order("date", { ascending: false }),
   ]);
   return {
-    settings: (settings.data ?? { partner_name: null, start_date: null }) as Settings,
+    settings,
     meetings: (meetings.data ?? []) as { id: string; date: string; title: string | null; place: string | null }[],
     plans: (plans.data ?? []) as Plan[],
   };

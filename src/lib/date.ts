@@ -43,19 +43,19 @@ export function addDays(ymdStr: string, n: number) {
   return ymd(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
 }
 
-/** 기록은 만난 날로부터 이 일수가 지나야 공개된다. */
+/** 기본값: 기록은 만난 날로부터 이 일수가 지나야 공개된다. (/admin 설정에서 변경) */
 export const REVEAL_DAYS = 7;
 
 /** 오늘 기준 공개된 기록의 마지막 날짜 (이 날짜 이하만 보임) */
-export function revealCutoff(today: string) {
-  return addDays(today, -REVEAL_DAYS);
+export function revealCutoff(today: string, days = REVEAL_DAYS) {
+  return addDays(today, -days);
 }
 
-export function isRevealed(date: string, today: string) {
-  return date <= revealCutoff(today);
+export function isRevealed(date: string, today: string, days = REVEAL_DAYS) {
+  return date <= revealCutoff(today, days);
 }
 
-/** 공개일 (만난 날 + 7일) */
-export function revealDate(date: string) {
-  return addDays(date, REVEAL_DAYS);
+/** 공개일 (만난 날 + days) */
+export function revealDate(date: string, days = REVEAL_DAYS) {
+  return addDays(date, days);
 }

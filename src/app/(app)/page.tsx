@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { getNextPlan, getSettings, getTimeline, type TimelineItem } from "@/lib/data";
+import { getNextPlan, getSettings, getTimeline, type LockedItem, type TimelineItem } from "@/lib/data";
+import { LockedCard, LockedNoticeProvider } from "@/components/locked-notice";
 import { daysBetween, formatDate, parseYMD, todayKST } from "@/lib/date";
 import { APP_NAME } from "@/lib/config";
 import { josa } from "@/lib/text";
@@ -21,7 +22,7 @@ export default function HomePage() {
 }
 
 async function Home() {
-  const [settings, timeline] = await Promise.all([getSettings(), getTimeline()]);
+  const [settings, { items, locked }] = await Promise.all([getSettings(), getTimeline()]);
   const today = todayKST();
   const next = await getNextPlan(today);
   return (
@@ -30,10 +31,12 @@ async function Home() {
         partner={settings.partner_name}
         start={settings.start_date}
         today={today}
-        count={timeline.length}
+        count={items.length + locked.length}
         next={next ? { date: next.date, memo: next.memo, dday: daysBetween(today, next.date) } : null}
       />
-      <Timeline items={timeline} />
+      <LockedNoticeProvider>
+        <Timeline items={items} locked={locked} today={today} />
+      </LockedNoticeProvider>
     </>
   );
 }
@@ -75,8 +78,10 @@ function Hero({
   );
 }
 
-function Timeline({ items }: { items: TimelineItem[] }) {
-  if (items.length === 0) {
+type Entry = { kind: "open"; m: TimelineItem } | { kind: "locked"; l: LockedItem };
+
+function Timeline({ items, locked, today }: { items: TimelineItem[]; locked: LockedItem[]; today: string }) {
+  if (items.length === 0 && locked.length === 0) {
     return (
       <div className="mx-4 mt-6 rounded-3xl border border-dashed border-line px-6 py-14 text-center">
         <HeartIcon className="mx-auto h-8 w-8 text-accent" />
@@ -87,8 +92,13 @@ function Timeline({ items }: { items: TimelineItem[] }) {
   }
 
   // 연·월로 묶기
-  const groups: { key: string; label: string; items: TimelineItem[] }[] = [];
-  for (const it of items) {
+  const entries: (Entry & { date: string })[] = [
+    ...locked.map((l) => ({ kind: "locked" as const, l, date: l.date })),
+    ...items.map((m) => ({ kind: "open" as const, m, date: m.date })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+
+  const groups: { key: string; label: string; items: (Entry & { date: string })[] }[] = [];
+  for (const it of entries) {
     const { y, m } = parseYMD(it.date);
     const key = `${y}-${m}`;
     let g = groups.at(-1);
@@ -105,11 +115,22 @@ function Timeline({ items }: { items: TimelineItem[] }) {
         <section key={g.key}>
           <h2 className="mb-3 px-5 text-[13px] font-bold text-muted">{g.label}</h2>
           <ul className="space-y-4 px-4">
-            {g.items.map((m) => (
-              <li key={m.id}>
-                <MeetingCard m={m} />
-              </li>
-            ))}
+            {g.items.map((e) =>
+              e.kind === "open" ? (
+                <li key={e.m.id}>
+                  <MeetingCard m={e.m} />
+                </li>
+              ) : (
+                <li key={e.l.id}>
+                  <LockedCard
+                    date={e.l.date}
+                    revealOn={e.l.revealOn}
+                    dateLabel={formatDate(e.l.date)}
+                    dday={daysBetween(today, e.l.revealOn)}
+                  />
+                </li>
+              ),
+            )}
           </ul>
         </section>
       ))}

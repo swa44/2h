@@ -3,10 +3,19 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
-export default function SettingsForm({ partnerName, startDate }: { partnerName: string; startDate: string }) {
+export default function SettingsForm({
+  partnerName,
+  startDate,
+  revealDays,
+}: {
+  partnerName: string;
+  startDate: string;
+  revealDays: number;
+}) {
   const router = useRouter();
   const [name, setName] = useState(partnerName);
   const [start, setStart] = useState(startDate);
+  const [days, setDays] = useState(String(revealDays));
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -14,15 +23,27 @@ export default function SettingsForm({ partnerName, startDate }: { partnerName: 
     setBusy(true);
     setMsg(null);
     const supabase = supabaseBrowser();
+    const n = Math.round(Number(days));
+    if (!Number.isFinite(n) || n < 0 || n > 365) {
+      setBusy(false);
+      return setMsg("기다리는 날은 0~365 사이로 입력해주세요.");
+    }
     const { data } = await supabase.auth.getUser();
     const { error } = await supabase.from("twoh_settings").upsert({
       user_id: data.user?.id,
       partner_name: name.trim() || null,
       start_date: start || null,
+      reveal_days: n,
       updated_at: new Date().toISOString(),
     });
     setBusy(false);
-    setMsg(error ? "저장하지 못했어요." : "저장했어요.");
+    setMsg(
+      error
+        ? error.message.includes("reveal_days")
+          ? "Supabase에서 supabase/migrations_reveal_days.sql 을 먼저 실행해주세요."
+          : "저장하지 못했어요."
+        : "저장했어요.",
+    );
     if (!error) router.refresh();
   }
 
@@ -52,6 +73,21 @@ export default function SettingsForm({ partnerName, startDate }: { partnerName: 
             onChange={(e) => setStart(e.target.value)}
             className="h-12 w-full rounded-2xl border border-line bg-bg px-4 outline-none focus:border-accent"
           />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[13px] font-bold text-muted">공개까지 기다리는 날</span>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={365}
+              value={days}
+              onChange={(e) => setDays(e.target.value)}
+              className="h-12 w-24 rounded-2xl border border-line bg-bg px-4 text-center outline-none focus:border-accent"
+            />
+            <span className="text-sm text-muted">일 뒤에 공개 (만난 날 기준, 0이면 바로)</span>
+          </div>
         </label>
         <button
           onClick={save}

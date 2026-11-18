@@ -3,11 +3,22 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { daysBetween, formatDate, formatDateLong, parseYMD, ymd } from "@/lib/date";
 import type { Plan } from "@/lib/types";
+import type { LockedItem } from "@/lib/data";
 import { ChevronLeft, ChevronRight, HeartIcon, XIcon } from "@/components/icons";
 
 type M = { id: string; date: string; title: string | null; place: string | null };
 
-export default function Calendar({ today, meetings, plans }: { today: string; meetings: M[]; plans: Plan[] }) {
+export default function Calendar({
+  today,
+  meetings,
+  locked,
+  plans,
+}: {
+  today: string;
+  meetings: M[];
+  locked: LockedItem[];
+  plans: Plan[];
+}) {
   const t = parseYMD(today);
   const [view, setView] = useState({ y: t.y, m: t.m });
   const [selected, setSelected] = useState<string | null>(null);
@@ -17,8 +28,10 @@ export default function Calendar({ today, meetings, plans }: { today: string; me
     meetings.forEach((x) => mm.set(x.date, [...(mm.get(x.date) ?? []), x]));
     const pp = new Map<string, Plan[]>();
     plans.forEach((x) => pp.set(x.date, [...(pp.get(x.date) ?? []), x]));
-    return { mm, pp };
-  }, [meetings, plans]);
+    const ll = new Map<string, LockedItem[]>();
+    locked.forEach((x) => ll.set(x.date, [...(ll.get(x.date) ?? []), x]));
+    return { mm, pp, ll };
+  }, [meetings, plans, locked]);
 
   const firstDow = new Date(Date.UTC(view.y, view.m - 1, 1)).getUTCDay();
   const daysInMonth = new Date(Date.UTC(view.y, view.m, 0)).getUTCDate();
@@ -26,7 +39,8 @@ export default function Calendar({ today, meetings, plans }: { today: string; me
     ...Array.from({ length: firstDow }, () => null),
     ...Array.from({ length: daysInMonth }, (_, i) => ymd(view.y, view.m, i + 1)),
   ];
-  const monthCount = meetings.filter((x) => x.date.startsWith(ymd(view.y, view.m, 1).slice(0, 7))).length;
+  const monthKey = ymd(view.y, view.m, 1).slice(0, 7);
+  const monthCount = [...meetings, ...locked].filter((x) => x.date.startsWith(monthKey)).length;
 
   const move = (delta: number) =>
     setView(({ y, m }) => {
@@ -38,6 +52,7 @@ export default function Calendar({ today, meetings, plans }: { today: string; me
 
   const selMeetings = selected ? byDate.mm.get(selected) ?? [] : [];
   const selPlans = selected ? byDate.pp.get(selected) ?? [] : [];
+  const selLocked = selected ? byDate.ll.get(selected) ?? [] : [];
 
   return (
     <div className="px-4">
@@ -68,6 +83,7 @@ export default function Calendar({ today, meetings, plans }: { today: string; me
           {cells.map((d, i) => {
             if (!d) return <div key={`e${i}`} />;
             const met = byDate.mm.has(d);
+            const lock = !met && byDate.ll.has(d);
             const plan = byDate.pp.has(d);
             const isToday = d === today;
             return (
@@ -80,6 +96,11 @@ export default function Calendar({ today, meetings, plans }: { today: string; me
                   <span className="relative grid h-9 w-9 place-items-center">
                     <HeartIcon filled className="absolute inset-0 h-9 w-9 text-accent" />
                     <span className="relative text-[13px] font-bold text-accent-ink">{parseYMD(d).d}</span>
+                  </span>
+                ) : lock ? (
+                  <span className="relative grid h-9 w-9 place-items-center">
+                    <HeartIcon className="absolute inset-0 h-9 w-9 text-accent/60" />
+                    <span className="relative text-[13px] font-bold text-accent/80">{parseYMD(d).d}</span>
                   </span>
                 ) : (
                   <span
@@ -98,6 +119,9 @@ export default function Calendar({ today, meetings, plans }: { today: string; me
         <div className="mt-3 flex justify-center gap-4 text-[11px] text-muted">
           <span className="flex items-center gap-1">
             <HeartIcon filled className="h-3.5 w-3.5 text-accent" /> 만난 날
+          </span>
+          <span className="flex items-center gap-1">
+            <HeartIcon className="h-3.5 w-3.5 text-accent/60" /> 공개 전
           </span>
           <span className="flex items-center gap-1">
             <span className="h-3 w-3 rounded-full bg-plan-soft ring-1 ring-plan" /> 약속
@@ -157,6 +181,22 @@ export default function Calendar({ today, meetings, plans }: { today: string; me
               </ul>
             )}
 
+            {selLocked.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {selLocked.map((x) => (
+                  <li key={x.id} className="relative overflow-hidden rounded-2xl bg-surface px-4 py-3">
+                    <div aria-hidden className="flex items-center gap-2 blur-[3px] select-none">
+                      <HeartIcon filled className="h-4 w-4 text-accent" />
+                      <span className="h-3 w-2/3 rounded bg-ink/20" />
+                    </div>
+                    <p className="absolute inset-0 flex items-center justify-center text-sm font-bold text-accent">
+                      아직 볼 수 없어요 · {formatDate(x.revealOn)}에 열려요
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+
             {selPlans.length > 0 && (
               <ul className="mt-3 space-y-2">
                 {selPlans.map((p) => (
@@ -167,7 +207,7 @@ export default function Calendar({ today, meetings, plans }: { today: string; me
               </ul>
             )}
 
-            {selMeetings.length === 0 && selPlans.length === 0 && (
+            {selMeetings.length === 0 && selPlans.length === 0 && selLocked.length === 0 && (
               <p className="mt-4 mb-2 text-center text-sm text-muted">이 날은 기록이 없어요</p>
             )}
           </div>

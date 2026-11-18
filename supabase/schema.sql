@@ -11,6 +11,9 @@ create table if not exists public.twoh_settings (
   start_date   date,
   updated_at   timestamptz not null default now()
 );
+-- 기록 공개까지 기다리는 날 (만난 날 + N일 뒤 공개)
+alter table public.twoh_settings
+  add column if not exists reveal_days int not null default 7 check (reveal_days between 0 and 365);
 
 -- ─────────────────────────────────────────────
 -- 만남 기록

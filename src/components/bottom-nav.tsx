@@ -24,7 +24,7 @@ export function NavInner({ active }: { active?: string }) {
             <li key={href}>
               <Link
                 href={href}
-                className={`flex h-12 flex-col items-center justify-center gap-0.5 text-[10px] ${on ? "text-accent" : "text-muted"}`}
+                className={`flex h-14 flex-col items-center justify-center gap-0.5 text-[10px] ${on ? "text-accent" : "text-muted"}`}
               >
                 <Icon className="h-[22px] w-[22px]" />
                 {label}

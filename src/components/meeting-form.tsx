@@ -40,12 +40,14 @@ export default function MeetingForm({
   title: headerTitle,
   back,
   footer,
+  revealDays,
 }: {
   initial?: MeetingFormInitial;
   defaultDate: string;
   title: string;
   back: string;
   footer?: ReactNode;
+  revealDays: number;
 }) {
   const leavingRef = useRef(false);
   const isEdit = Boolean(initial);
@@ -256,7 +258,7 @@ export default function MeetingForm({
       leavingRef.current = true;
       setDirty(false);
       setStatus(null);
-      window.location.replace(isRevealed(date, todayKST()) ? `/m/${id}` : "/admin");
+      window.location.replace(isRevealed(date, todayKST(), revealDays) ? `/m/${id}` : "/admin");
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 시도해주세요.");
@@ -311,7 +313,7 @@ export default function MeetingForm({
         />
         {date && (
           <span className="mt-1.5 block px-1 text-xs text-muted">
-            {isRevealed(date, todayKST()) ? "바로 공개돼요" : `${formatDate(revealDate(date))}에 공개돼요`}
+            {isRevealed(date, todayKST(), revealDays) ? "바로 공개돼요" : `${formatDate(revealDate(date, revealDays))}에 공개돼요`}
           </span>
         )}
       </label>
