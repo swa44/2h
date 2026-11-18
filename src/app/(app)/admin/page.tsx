@@ -7,11 +7,20 @@ import { BlockSkeleton } from "@/components/skeleton";
 import { ChevronRight, PenIcon } from "@/components/icons";
 import SettingsForm from "./settings-form";
 import PlanManager from "./plan-manager";
+import { lock } from "@/app/unlock/actions";
 
 export default function AdminPage() {
   return (
     <main>
-      <PageHeader title="관리" back="/" />
+      <PageHeader
+        title="관리"
+        back="/"
+        right={
+          <form action={lock}>
+            <button className="rounded-full px-3 py-1.5 text-sm text-muted active:bg-line">잠그기</button>
+          </form>
+        }
+      />
       <Suspense fallback={<BlockSkeleton className="h-96" />}>
         <Admin />
       </Suspense>

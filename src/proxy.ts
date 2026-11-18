@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_COOKIE, isAdminToken } from "@/lib/admin-key";
 
 function fail(message: string) {
   return new NextResponse(`설정 오류: ${message}`, {
@@ -51,6 +52,13 @@ async function run(request: NextRequest, supabaseUrl: string, supabaseKey: strin
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
+    return NextResponse.redirect(url);
+  }
+  // 관리 화면은 관리자 키 쿠키가 있어야 들어갈 수 있음
+  if (loggedIn && request.nextUrl.pathname.startsWith("/admin") && !isAdminToken(request.cookies.get(ADMIN_COOKIE)?.value)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/unlock";
+    url.search = `?next=${encodeURIComponent(request.nextUrl.pathname)}`;
     return NextResponse.redirect(url);
   }
   if (loggedIn && isLogin) {

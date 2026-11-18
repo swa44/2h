@@ -29,11 +29,12 @@ npm run dev
 
 ### 3. Vercel 배포
 1. GitHub에 push → Vercel에서 Import
-2. Environment Variables에 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 추가
+2. Environment Variables에 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ADMIN_KEY`(관리 화면 잠금 키) 추가
 3. 배포 후 휴대폰에서 접속 → 홈 화면에 추가
 
 ## 메모
 - 사진은 업로드 시 브라우저에서 가운데 기준 정사각형 1000×1000 JPEG(+400×400 썸네일)로 잘라 저장됩니다. 원본은 폰/클라우드에 보관하세요.
 - 사진은 비공개 버킷에 저장되고, 서버에서 6시간짜리 서명 URL로만 보여줍니다.
+- `/admin`은 로그인 + 관리자 키(`ADMIN_KEY`)가 필요합니다. 한 번 열면 그 기기에서 30일 유지, 관리 화면의 "잠그기"로 즉시 잠금.
 - 아이콘 다시 만들기: `node scripts/make-icons.mjs`
 - 앱 이름 변경: `src/lib/config.ts`
