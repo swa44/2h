@@ -11,7 +11,7 @@ export default function EditPage({ params }: PageProps<"/admin/m/[id]/edit">) {
     <Suspense
       fallback={
         <>
-          <PageHeader title="기록 수정" />
+          <PageHeader title="기록 수정" back="/admin" />
           <BlockSkeleton className="h-96" />
         </>
       }
@@ -30,7 +30,7 @@ async function Edit({ params }: { params: PageProps<"/admin/m/[id]/edit">["param
     <main>
       <MeetingForm
         title="기록 수정"
-        back={`/m/${m.id}`}
+        back="/admin"
         footer={<DeleteMeeting id={m.id} />}
         revealDays={settings.reveal_days}
         defaultDate={m.date}

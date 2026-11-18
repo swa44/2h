@@ -258,7 +258,7 @@ export default function MeetingForm({
       leavingRef.current = true;
       setDirty(false);
       setStatus(null);
-      window.location.replace(isRevealed(date, todayKST(), revealDays) ? `/m/${id}` : "/admin");
+      window.location.replace(isEdit ? "/admin" : isRevealed(date, todayKST(), revealDays) ? `/m/${id}` : "/admin");
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 시도해주세요.");
