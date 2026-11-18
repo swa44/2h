@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getMeeting } from "@/lib/data";
@@ -31,14 +30,7 @@ async function Detail({ params }: { params: PageProps<"/m/[id]">["params"] }) {
 
   return (
     <main>
-      <PageHeader
-        back="/"
-        right={
-          <Link href={`/admin/m/${m.id}/edit`} className="rounded-full px-3 py-1.5 text-sm font-bold text-accent active:bg-accent-soft">
-            수정
-          </Link>
-        }
-      />
+      <PageHeader back="/" />
 
       {m.photos.length > 0 && <PhotoCarousel photos={m.photos.map((p) => ({ id: p.id, url: p.url, thumbUrl: p.thumbUrl, w: p.width, h: p.height }))} />}
 
