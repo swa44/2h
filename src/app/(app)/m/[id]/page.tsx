@@ -60,10 +60,7 @@ async function Detail({ params }: { params: PageProps<"/m/[id]">["params"] }) {
             <p className="font-serif text-[16px] leading-[2] break-keep whitespace-pre-wrap">{m.letter}</p>
           </div>
         )}
-        <p className="mt-4 mb-6 text-right text-xs text-muted">
-          {m.updated_at !== m.created_at ? "수정됨 · " : ""}
-          {new Date(m.updated_at).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}
-        </p>
+        <div className="h-8" />
       </article>
     </main>
   );

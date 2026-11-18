@@ -27,8 +27,8 @@ export default function DeleteMeeting({ id }: { id: string }) {
   }
 
   return (
-    <button onClick={onDelete} disabled={busy} className="rounded-full px-3 py-1.5 text-sm text-muted active:bg-line">
-      {busy ? "지우는 중…" : "삭제"}
+    <button onClick={onDelete} disabled={busy} className="h-12 w-full rounded-2xl border border-line text-sm text-muted active:bg-line">
+      {busy ? "지우는 중…" : "이 기록 삭제"}
     </button>
   );
 }

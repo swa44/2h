@@ -1,11 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { PHOTO_BUCKET } from "@/lib/supabase/env";
 import { compressImage } from "@/lib/image";
 import { MOODS } from "@/lib/types";
 import { ImageIcon, PinIcon, XIcon } from "./icons";
+import { PageHeader } from "./page-header";
 
 type Existing = { kind: "existing"; key: string; id: string; path: string; thumb_path: string; preview: string };
 type Added = { kind: "new"; key: string; file: File; preview: string };
@@ -33,7 +34,19 @@ function readDraft(): Draft | null {
   }
 }
 
-export default function MeetingForm({ initial, defaultDate }: { initial?: MeetingFormInitial; defaultDate: string }) {
+export default function MeetingForm({
+  initial,
+  defaultDate,
+  title: headerTitle,
+  back,
+  footer,
+}: {
+  initial?: MeetingFormInitial;
+  defaultDate: string;
+  title: string;
+  back: string;
+  footer?: ReactNode;
+}) {
   const router = useRouter();
   const isEdit = Boolean(initial);
 
@@ -102,8 +115,11 @@ export default function MeetingForm({ initial, defaultDate }: { initial?: Meetin
   useLayoutEffect(() => {
     const el = letterRef.current;
     if (!el) return;
+    // 높이를 잠깐 auto로 바꾸면 페이지가 짧아져 스크롤이 위로 튄다 → 위치를 저장했다가 복원
+    const y = window.scrollY;
     el.style.height = "auto";
     el.style.height = `${Math.max(el.scrollHeight, 280)}px`;
+    if (window.scrollY !== y) window.scrollTo(0, y);
   }, [letter]);
 
   // 새로 고른 사진 미리보기 URL 정리
@@ -243,8 +259,30 @@ export default function MeetingForm({ initial, defaultDate }: { initial?: Meetin
     }
   }
 
+  const saveLabel = status ?? (isEdit ? "수정 완료" : "기록 남기기");
+
   return (
-    <div className="px-4 pb-28">
+    <>
+      <PageHeader
+        title={headerTitle}
+        back={back}
+        right={
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="rounded-full bg-accent px-4 py-1.5 text-sm font-bold text-accent-ink disabled:opacity-70"
+          >
+            {status ?? "저장"}
+          </button>
+        }
+      />
+      {error && (
+        <p className="sticky top-[calc(52px+env(safe-area-inset-top))] z-10 mx-4 mb-3 rounded-xl bg-accent-soft px-3 py-2 text-center text-sm text-accent">
+          {error}
+        </p>
+      )}
+    <div className="px-4 pb-8">
       {restored && (
         <div className="mb-4 flex items-center justify-between rounded-2xl bg-accent-soft px-4 py-3 text-sm text-accent">
           <span>쓰던 글을 불러왔어요</span>
@@ -388,18 +426,17 @@ export default function MeetingForm({ initial, defaultDate }: { initial?: Meetin
         </p>
       </div>
 
-      {/* 저장 바 */}
-      <div className="fixed inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] z-20 mx-auto max-w-md px-4 pb-3">
-        {error && <p className="mb-2 rounded-xl bg-surface px-3 py-2 text-center text-sm text-accent shadow">{error}</p>}
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className="h-13 w-full rounded-2xl bg-accent font-bold text-accent-ink shadow-lg shadow-accent/20 transition active:scale-[0.99] disabled:opacity-70"
-        >
-          {status ?? (isEdit ? "수정 완료" : "기록 남기기")}
-        </button>
-      </div>
+      {/* 맨 아래 저장 버튼 (화면에 고정하지 않음 → 글을 가리지 않음) */}
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={saving}
+        className="mt-6 h-13 w-full rounded-2xl bg-accent font-bold text-accent-ink transition active:scale-[0.99] disabled:opacity-70"
+      >
+        {saveLabel}
+      </button>
+      {footer && <div className="mt-6">{footer}</div>}
     </div>
+    </>
   );
 }

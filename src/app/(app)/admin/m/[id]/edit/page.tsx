@@ -28,8 +28,10 @@ async function Edit({ params }: { params: PageProps<"/admin/m/[id]/edit">["param
   if (!m) notFound();
   return (
     <main>
-      <PageHeader title="기록 수정" back={`/m/${m.id}`} right={<DeleteMeeting id={m.id} />} />
       <MeetingForm
+        title="기록 수정"
+        back={`/m/${m.id}`}
+        footer={<DeleteMeeting id={m.id} />}
         defaultDate={m.date}
         initial={{
           id: m.id,
