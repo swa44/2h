@@ -1,5 +1,4 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { PHOTO_BUCKET } from "@/lib/supabase/env";
@@ -8,7 +7,7 @@ import { MOODS } from "@/lib/types";
 import { ImageIcon, PinIcon, XIcon } from "./icons";
 import { PageHeader } from "./page-header";
 
-type Existing = { kind: "existing"; key: string; id: string; path: string; thumb_path: string; preview: string };
+type Existing = { kind: "existing"; key: string; id: string; path: string; thumb_path: string; preview: string; orig: number };
 type Added = { kind: "new"; key: string; file: File; preview: string };
 type Item = Existing | Added;
 
@@ -47,7 +46,7 @@ export default function MeetingForm({
   back: string;
   footer?: ReactNode;
 }) {
-  const router = useRouter();
+  const leavingRef = useRef(false);
   const isEdit = Boolean(initial);
 
   const [date, setDate] = useState(initial?.date ?? defaultDate);
@@ -57,8 +56,9 @@ export default function MeetingForm({
   const [letter, setLetter] = useState(initial?.letter ?? "");
   const [items, setItems] = useState<Item[]>(
     () =>
-      initial?.photos.map((p) => ({
+      initial?.photos.map((p, i) => ({
         kind: "existing" as const,
+        orig: i,
         key: p.id,
         id: p.id,
         path: p.path,
@@ -106,7 +106,9 @@ export default function MeetingForm({
   // 저장 안 하고 나가려 할 때 경고
   useEffect(() => {
     if (!dirty || saving) return;
-    const h = (e: BeforeUnloadEvent) => e.preventDefault();
+    const h = (e: BeforeUnloadEvent) => {
+      if (!leavingRef.current) e.preventDefault();
+    };
     window.addEventListener("beforeunload", h);
     return () => window.removeEventListener("beforeunload", h);
   }, [dirty, saving]);
@@ -230,28 +232,30 @@ export default function MeetingForm({
 
       // 순서 반영 + 새 사진 행 추가
       const inserts = [];
+      const moves = [];
       for (const [position, it] of items.entries()) {
         if (it.kind === "existing") {
-          const { error } = await supabase.from("twoh_photos").update({ position }).eq("id", it.id);
-          if (error) throw error;
+          if (it.orig !== position) moves.push(supabase.from("twoh_photos").update({ position }).eq("id", it.id));
         } else {
-          const u = uploaded.get(it.key)!;
-          inserts.push({ meeting_id: id, position, ...u });
+          inserts.push({ meeting_id: id, position, ...uploaded.get(it.key)! });
         }
       }
-      if (inserts.length) {
-        const { error } = await supabase.from("twoh_photos").insert(inserts);
-        if (error) throw error;
-      }
+      const results = await Promise.all([
+        ...moves,
+        ...(inserts.length ? [supabase.from("twoh_photos").insert(inserts)] : []),
+      ]);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
 
       if (!isEdit) {
         try {
           localStorage.removeItem(DRAFT_KEY);
         } catch {}
       }
+      leavingRef.current = true;
       setDirty(false);
-      router.push(`/m/${id}`);
-      router.refresh();
+      setStatus(null);
+      window.location.replace(`/m/${id}`);
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 시도해주세요.");

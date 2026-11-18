@@ -1,11 +1,9 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { PHOTO_BUCKET } from "@/lib/supabase/env";
 
 export default function DeleteMeeting({ id }: { id: string }) {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function onDelete() {
@@ -22,8 +20,8 @@ export default function DeleteMeeting({ id }: { id: string }) {
       setBusy(false);
       return;
     }
-    router.replace("/admin");
-    router.refresh();
+    setBusy(false);
+    window.location.replace("/admin");
   }
 
   return (
