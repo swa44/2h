@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>오프라인</title>
+<style>
+  :root { --bg:#f7f2ec; --ink:#3a2e29; --muted:#8c7b72; --accent:#d26f62; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1a1513; --ink:#efe6df; --muted:#a39389; --accent:#e58b7e; } }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,sans-serif}
+  main{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center}
+  p{color:var(--muted);margin:0} button{margin-top:8px;border:0;border-radius:999px;padding:12px 22px;background:var(--accent);color:#fff;font-size:15px}
+</style>
+</head>
+<body><main>
+  <img src="/icons/icon-192.png" width="64" height="64" alt="" style="border-radius:16px" />
+  <h1 style="font-size:18px;margin:8px 0 0">인터넷 연결이 없어요</h1>
+  <p>연결되면 우리의 기록을 다시 볼 수 있어요.</p>
+  <button onclick="location.reload()">다시 시도</button>
+</main></body>
+</html>

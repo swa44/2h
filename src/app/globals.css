@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --bg: #f7f2ec;
+  --surface: #fffdf9;
+  --ink: #3a2e29;
+  --muted: #8c7b72;
+  --line: #e9dfd5;
+  --accent: #d26f62;
+  --accent-ink: #ffffff;
+  --accent-soft: #f6e1dc;
+  --plan: #6f8fb8;
+  --plan-soft: #e1e9f3;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #1a1513;
+    --surface: #241e1b;
+    --ink: #efe6df;
+    --muted: #a39389;
+    --line: #3a302b;
+    --accent: #e58b7e;
+    --accent-ink: #2a1512;
+    --accent-soft: #3d2622;
+    --plan: #8fb0d8;
+    --plan-soft: #24303d;
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-plan: var(--plan);
+  --color-plan-soft: var(--plan-soft);
+  --font-sans: var(--font-noto), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-gowun), "Apple SD Gothic Neo", serif;
+}
+
+html {
+  background: var(--bg);
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  overscroll-behavior-y: none;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px; /* iOS 확대 방지 */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
 }
