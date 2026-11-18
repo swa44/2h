@@ -58,6 +58,10 @@ select {
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+.pb-nav {
+  /* 아이폰 홈 바 영역을 전부 쓰지 않고 살짝만 띄움 */
+  padding-bottom: max(calc(env(safe-area-inset-bottom) - 16px), 4px);
+}
 .pt-safe {
   padding-top: env(safe-area-inset-top);
 }
