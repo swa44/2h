@@ -24,7 +24,7 @@ export default function EditPage({ params }: PageProps<"/admin/m/[id]/edit">) {
 async function Edit({ params }: { params: PageProps<"/admin/m/[id]/edit">["params"] }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const m = await getMeeting(id);
+  const m = await getMeeting(id, { includeHidden: true });
   if (!m) notFound();
   return (
     <main>

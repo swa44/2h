@@ -4,6 +4,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { PHOTO_BUCKET } from "@/lib/supabase/env";
 import { compressImage } from "@/lib/image";
 import { MOODS } from "@/lib/types";
+import { isRevealed, revealDate, todayKST, formatDate } from "@/lib/date";
 import { ImageIcon, PinIcon, XIcon } from "./icons";
 import { PageHeader } from "./page-header";
 
@@ -255,7 +256,7 @@ export default function MeetingForm({
       leavingRef.current = true;
       setDirty(false);
       setStatus(null);
-      window.location.replace(`/m/${id}`);
+      window.location.replace(isRevealed(date, todayKST()) ? `/m/${id}` : "/admin");
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 시도해주세요.");
@@ -308,6 +309,11 @@ export default function MeetingForm({
           }}
           className="h-12 w-full rounded-2xl border border-line bg-surface px-4 outline-none focus:border-accent"
         />
+        {date && (
+          <span className="mt-1.5 block px-1 text-xs text-muted">
+            {isRevealed(date, todayKST()) ? "바로 공개돼요" : `${formatDate(revealDate(date))}에 공개돼요`}
+          </span>
+        )}
       </label>
 
       {/* 제목·장소 */}

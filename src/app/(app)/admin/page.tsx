@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { getAdminData } from "@/lib/data";
-import { formatDate, todayKST } from "@/lib/date";
+import { daysBetween, formatDate, isRevealed, revealDate, todayKST } from "@/lib/date";
 import { PageHeader } from "@/components/page-header";
 import { BlockSkeleton } from "@/components/skeleton";
 import { ChevronRight, PenIcon } from "@/components/icons";
@@ -21,6 +21,7 @@ export default function AdminPage() {
 
 async function Admin() {
   const { settings, meetings, plans } = await getAdminData();
+  const today = todayKST();
   return (
     <div className="space-y-8 pb-6">
       <div className="px-4">
@@ -34,6 +35,7 @@ async function Admin() {
 
       <section>
         <h2 className="mb-2 px-5 text-[13px] font-bold text-muted">기록 관리 · {meetings.length}개</h2>
+        <p className="mb-2 px-5 text-xs text-muted">기록은 만난 날로부터 7일 뒤에 공개돼요</p>
         {meetings.length === 0 ? (
           <p className="mx-4 rounded-2xl bg-surface px-4 py-6 text-center text-sm text-muted">아직 기록이 없어요</p>
         ) : (
@@ -43,7 +45,13 @@ async function Admin() {
                 <Link href={`/admin/m/${m.id}/edit`} className="flex items-center gap-3 px-4 py-3 active:bg-line/40">
                   <span className="w-28 shrink-0 text-xs text-muted">{formatDate(m.date)}</span>
                   <span className="flex-1 truncate text-sm">{m.title || m.place || "그날의 기록"}</span>
-                  <span className="text-xs text-accent">수정</span>
+                  {isRevealed(m.date, today) ? (
+                    <span className="text-xs text-accent">수정</span>
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-plan-soft px-2 py-0.5 text-[11px] font-bold text-plan">
+                      공개 D-{daysBetween(today, revealDate(m.date))}
+                    </span>
+                  )}
                   <ChevronRight className="h-4 w-4 text-muted" />
                 </Link>
               </li>
@@ -54,7 +62,7 @@ async function Admin() {
 
       <section>
         <h2 className="mb-2 px-5 text-[13px] font-bold text-muted">약속 관리</h2>
-        <PlanManager plans={plans} today={todayKST()} />
+        <PlanManager plans={plans} today={today} />
       </section>
 
       <section>

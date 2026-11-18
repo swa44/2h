@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "./supabase/server";
 import { PHOTO_BUCKET } from "./supabase/env";
 import type { MeetingWithPhotos, Plan, Settings } from "./types";
+import { revealCutoff, todayKST } from "./date";
+
+/** 공개된 기록만: 만난 날 + 7일이 지난 것 */
+const cutoff = () => revealCutoff(todayKST());
 
 const SIGN_TTL = 60 * 60 * 6; // 6시간
 
@@ -45,6 +49,7 @@ export async function getTimeline(): Promise<TimelineItem[]> {
   const { data, error } = await supabase
     .from("twoh_meetings")
     .select(MEETING_COLS)
+    .lte("date", cutoff())
     .order("date", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -58,10 +63,11 @@ export async function getTimeline(): Promise<TimelineItem[]> {
 
 export type SignedPhoto = MeetingWithPhotos["photos"][number] & { url: string; thumbUrl: string };
 
-export async function getMeeting(id: string) {
+export async function getMeeting(id: string, { includeHidden = false } = {}) {
   const supabase = await authed();
   const { data } = await supabase.from("twoh_meetings").select(MEETING_COLS).eq("id", id).maybeSingle();
   if (!data) return null;
+  if (!includeHidden && (data as MeetingWithPhotos).date > cutoff()) return null;
   const m = sortPhotos(data as MeetingWithPhotos);
   const urls = await signMany(supabase, m.photos.flatMap((p) => [p.path, p.thumb_path]));
   const photos: SignedPhoto[] = m.photos.map((p) => ({
@@ -82,7 +88,7 @@ export async function getMeeting(id: string) {
 export async function getCalendarData() {
   const supabase = await authed();
   const [meetings, plans] = await Promise.all([
-    supabase.from("twoh_meetings").select("id,date,title,place").order("date"),
+    supabase.from("twoh_meetings").select("id,date,title,place").lte("date", cutoff()).order("date"),
     supabase.from("twoh_plans").select("id,date,memo").order("date"),
   ]);
   return {
@@ -125,7 +131,8 @@ export async function getAllPhotos(): Promise<GalleryPhoto[]> {
     created_at: string;
     meeting: GalleryPhoto["meeting"];
   };
-  const rows = (data as unknown as Row[]).sort(
+  const last = cutoff();
+  const rows = (data as unknown as Row[]).filter((r) => r.meeting.date <= last).sort(
     (a, b) =>
       b.meeting.date.localeCompare(a.meeting.date) ||
       a.meeting.id.localeCompare(b.meeting.id) ||

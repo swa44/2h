@@ -37,3 +37,25 @@ export function daysBetween(a: string, b: string) {
 export function ymd(y: number, m: number, d: number) {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
+
+export function addDays(ymdStr: string, n: number) {
+  const d = new Date(toUTC(ymdStr) + n * 86_400_000);
+  return ymd(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+}
+
+/** 기록은 만난 날로부터 이 일수가 지나야 공개된다. */
+export const REVEAL_DAYS = 7;
+
+/** 오늘 기준 공개된 기록의 마지막 날짜 (이 날짜 이하만 보임) */
+export function revealCutoff(today: string) {
+  return addDays(today, -REVEAL_DAYS);
+}
+
+export function isRevealed(date: string, today: string) {
+  return date <= revealCutoff(today);
+}
+
+/** 공개일 (만난 날 + 7일) */
+export function revealDate(date: string) {
+  return addDays(date, REVEAL_DAYS);
+}
