@@ -64,7 +64,7 @@ export async function getSettings(): Promise<Settings> {
 
 export type TimelineItem = MeetingWithPhotos & { cover: string | null };
 /** 공개 전 기록: 내용은 보내지 않고 날짜만 */
-export type LockedItem = { id: string; date: string; revealOn: string };
+export type LockedItem = { id: string; date: string; title: string | null; revealOn: string };
 
 export async function getTimeline(): Promise<{ items: TimelineItem[]; locked: LockedItem[] }> {
   const supabase = await authed();
@@ -77,7 +77,7 @@ export async function getTimeline(): Promise<{ items: TimelineItem[]; locked: Lo
       .lte("date", last)
       .order("date", { ascending: false })
       .order("created_at", { ascending: false }),
-    supabase.from("twoh_meetings").select("id,date").gt("date", last).order("date", { ascending: false }),
+    supabase.from("twoh_meetings").select("id,date,title").gt("date", last).order("date", { ascending: false }),
   ]);
   if (open.error) throw open.error;
   const meetings = (open.data as MeetingWithPhotos[]).map(sortPhotos);
@@ -87,9 +87,10 @@ export async function getTimeline(): Promise<{ items: TimelineItem[]; locked: Lo
   );
   return {
     items: meetings.map((m) => ({ ...m, cover: m.photos[0] ? urls.get(m.photos[0].thumb_path) ?? null : null })),
-    locked: ((hidden.data ?? []) as { id: string; date: string }[]).map((h) => ({
+    locked: ((hidden.data ?? []) as { id: string; date: string; title: string | null }[]).map((h) => ({
       id: h.id,
       date: h.date,
+      title: h.title,
       revealOn: addDays(h.date, settings.reveal_days),
     })),
   };
@@ -125,14 +126,15 @@ export async function getCalendarData() {
   const last = revealCutoff(todayKST(), settings.reveal_days);
   const [meetings, hidden, plans] = await Promise.all([
     supabase.from("twoh_meetings").select("id,date,title,place").lte("date", last).order("date"),
-    supabase.from("twoh_meetings").select("id,date").gt("date", last).order("date"),
+    supabase.from("twoh_meetings").select("id,date,title").gt("date", last).order("date"),
     supabase.from("twoh_plans").select("id,date,memo").order("date"),
   ]);
   return {
     meetings: (meetings.data ?? []) as { id: string; date: string; title: string | null; place: string | null }[],
-    locked: ((hidden.data ?? []) as { id: string; date: string }[]).map((h) => ({
+    locked: ((hidden.data ?? []) as { id: string; date: string; title: string | null }[]).map((h) => ({
       id: h.id,
       date: h.date,
+      title: h.title,
       revealOn: addDays(h.date, settings.reveal_days),
     })) as LockedItem[],
     plans: (plans.data ?? []) as Plan[],

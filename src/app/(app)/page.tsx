@@ -124,6 +124,7 @@ function Timeline({ items, locked, today }: { items: TimelineItem[]; locked: Loc
                 <li key={e.l.id}>
                   <LockedCard
                     date={e.l.date}
+                    title={e.l.title}
                     revealOn={e.l.revealOn}
                     dateLabel={formatDate(e.l.date)}
                     dday={daysBetween(today, e.l.revealOn)}

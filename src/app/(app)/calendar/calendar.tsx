@@ -184,14 +184,10 @@ export default function Calendar({
             {selLocked.length > 0 && (
               <ul className="mt-3 space-y-2">
                 {selLocked.map((x) => (
-                  <li key={x.id} className="relative overflow-hidden rounded-2xl bg-surface px-4 py-3">
-                    <div aria-hidden className="flex items-center gap-2 blur-[3px] select-none">
-                      <HeartIcon filled className="h-4 w-4 text-accent" />
-                      <span className="h-3 w-2/3 rounded bg-ink/20" />
-                    </div>
-                    <p className="absolute inset-0 flex items-center justify-center text-sm font-bold text-accent">
-                      아직 볼 수 없어요 · {formatDate(x.revealOn)}에 열려요
-                    </p>
+                  <li key={x.id} className="flex items-center gap-2 rounded-2xl bg-surface px-4 py-3">
+                    <HeartIcon className="h-4 w-4 shrink-0 text-accent/60" />
+                    <span className="flex-1 truncate text-sm font-bold">{x.title || "그날의 기록"}</span>
+                    <span className="shrink-0 text-xs text-accent">{formatDate(x.revealOn)}에 열려요</span>
                   </li>
                 ))}
               </ul>

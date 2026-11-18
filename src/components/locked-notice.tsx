@@ -47,7 +47,19 @@ export function LockedNoticeProvider({ children }: { children: ReactNode }) {
 }
 
 /** 흐리게 보이는 공개 전 기록 카드 (실제 내용은 서버가 보내지 않음) */
-export function LockedCard({ date, revealOn, dateLabel, dday }: { date: string; revealOn: string; dateLabel: string; dday: number }) {
+export function LockedCard({
+  date,
+  title,
+  revealOn,
+  dateLabel,
+  dday,
+}: {
+  date: string;
+  title: string | null;
+  revealOn: string;
+  dateLabel: string;
+  dday: number;
+}) {
   const show = useLockedNotice();
   return (
     <button
@@ -55,18 +67,19 @@ export function LockedCard({ date, revealOn, dateLabel, dday }: { date: string; 
       data-date={date}
       className="relative block w-full overflow-hidden rounded-3xl bg-surface text-left shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-[0.99]"
     >
-      <div aria-hidden className="pointer-events-none select-none blur-md">
-        <div className="aspect-[4/3] bg-gradient-to-br from-accent-soft via-[#efd9cf] to-plan-soft" />
-        <div className="space-y-2 p-4">
-          <div className="h-3 w-24 rounded bg-line" />
-          <div className="h-4 w-2/3 rounded bg-ink/20" />
-          <div className="h-3 w-full rounded bg-line" />
-          <div className="h-3 w-5/6 rounded bg-line" />
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <div aria-hidden className="absolute inset-0 scale-110 bg-gradient-to-br from-accent-soft via-[#efd9cf] to-plan-soft blur-md" />
+        <div className="absolute inset-0 grid place-items-center">
+          <span className="rounded-full bg-accent px-3.5 py-1.5 text-sm font-bold text-accent-ink shadow-sm">D-{dday} 공개</span>
         </div>
       </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-surface/20">
-        <span className="rounded-full bg-surface/90 px-3 py-1 text-xs text-muted shadow-sm">{dateLabel}</span>
-        <span className="rounded-full bg-accent px-3 py-1 text-sm font-bold text-accent-ink shadow-sm">D-{dday} 공개</span>
+      <div className="p-4">
+        <p className="text-xs text-muted">{dateLabel}</p>
+        {title && <h3 className="mt-1.5 font-serif text-[17px] font-bold">{title}</h3>}
+        <div aria-hidden className="mt-2.5 space-y-2 blur-[3px] select-none">
+          <div className="h-3 w-full rounded bg-line" />
+          <div className="h-3 w-4/6 rounded bg-line" />
+        </div>
       </div>
     </button>
   );
