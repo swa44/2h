@@ -319,7 +319,7 @@ export default function MeetingForm({ initial, defaultDate }: { initial?: Meetin
       <div className="mt-6">
         <div className="mb-2 flex items-baseline justify-between">
           <span className="text-[13px] font-bold text-muted">사진 {items.length > 0 && `${items.length}장`}</span>
-          {items.length > 1 && <span className="text-xs text-muted">사진을 누르면 대표 사진이 돼요</span>}
+          <span className="text-xs text-muted">1000×1000 정사각형으로 저장{items.length > 1 ? " · 누르면 대표 사진" : ""}</span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           {items.map((it, i) => (

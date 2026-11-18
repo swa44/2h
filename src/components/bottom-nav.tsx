@@ -1,13 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarIcon, GearIcon, HomeIcon, PenIcon } from "./icons";
+import { CalendarIcon, HomeIcon, ImageIcon } from "./icons";
 
 const TABS = [
   { href: "/", label: "기록", Icon: HomeIcon },
   { href: "/calendar", label: "캘린더", Icon: CalendarIcon },
-  { href: "/write", label: "쓰기", Icon: PenIcon },
-  { href: "/settings", label: "설정", Icon: GearIcon },
+  { href: "/photos", label: "사진", Icon: ImageIcon },
 ];
 
 export function BottomNav() {
@@ -18,7 +17,7 @@ export function BottomNav() {
 export function NavInner({ active }: { active?: string }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/90 backdrop-blur-md pb-safe">
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-md grid-cols-3">
         {TABS.map(({ href, label, Icon }) => {
           const on = active !== undefined && (href === "/" ? active === "/" || active.startsWith("/m/") : active.startsWith(href));
           return (

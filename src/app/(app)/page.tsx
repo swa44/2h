@@ -12,6 +12,9 @@ export default function HomePage() {
     <main className="pt-safe">
       <header className="flex items-center justify-between px-5 pt-5 pb-3">
         <h1 className="font-serif text-xl font-bold">{APP_NAME}</h1>
+        <Link href="/admin" aria-label="관리" className="grid h-9 w-9 place-items-center rounded-full text-muted active:bg-line">
+          <PenIcon className="h-5 w-5" />
+        </Link>
       </header>
       <Suspense fallback={<><BlockSkeleton className="h-36" /><div className="h-6" /><CardSkeleton /></>}>
         <Home />
@@ -60,7 +63,7 @@ function Hero({
           {days.toLocaleString()}<span className="ml-1 text-2xl">일</span>
         </p>
       ) : (
-        <Link href="/settings" className="mt-2 inline-block text-sm underline underline-offset-4">
+        <Link href="/admin" className="mt-2 inline-block text-sm underline underline-offset-4">
           설정에서 사귄 날을 입력해주세요
         </Link>
       )}
@@ -84,7 +87,7 @@ function Timeline({ items }: { items: TimelineItem[] }) {
         <HeartIcon className="mx-auto h-8 w-8 text-accent" />
         <p className="mt-3 font-serif text-lg">첫 번째 기록을 남겨볼까요?</p>
         <p className="mt-1 text-sm text-muted">만난 날의 사진과 그날의 마음을 적어두세요.</p>
-        <Link href="/write" className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-accent-ink">
+        <Link href="/admin/write" className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-accent-ink">
           <PenIcon className="h-4 w-4" /> 기록하기
         </Link>
       </div>

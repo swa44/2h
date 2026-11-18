@@ -13,20 +13,6 @@
   --plan-soft: #e1e9f3;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1a1513;
-    --surface: #241e1b;
-    --ink: #efe6df;
-    --muted: #a39389;
-    --line: #3a302b;
-    --accent: #e58b7e;
-    --accent-ink: #2a1512;
-    --accent-soft: #3d2622;
-    --plan: #8fb0d8;
-    --plan-soft: #24303d;
-  }
-}
 
 @theme inline {
   --color-bg: var(--bg);
@@ -44,6 +30,7 @@
 }
 
 html {
+  color-scheme: light;
   background: var(--bg);
   -webkit-tap-highlight-color: transparent;
 }

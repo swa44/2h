@@ -22,7 +22,7 @@ export default function DeleteMeeting({ id }: { id: string }) {
       setBusy(false);
       return;
     }
-    router.replace("/");
+    router.replace("/admin");
     router.refresh();
   }
 

@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { BlockSkeleton } from "@/components/skeleton";
 import DeleteMeeting from "./delete-meeting";
 
-export default function EditPage({ params }: PageProps<"/m/[id]/edit">) {
+export default function EditPage({ params }: PageProps<"/admin/m/[id]/edit">) {
   return (
     <Suspense
       fallback={
@@ -21,7 +21,7 @@ export default function EditPage({ params }: PageProps<"/m/[id]/edit">) {
   );
 }
 
-async function Edit({ params }: { params: PageProps<"/m/[id]/edit">["params"] }) {
+async function Edit({ params }: { params: PageProps<"/admin/m/[id]/edit">["params"] }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const m = await getMeeting(id);

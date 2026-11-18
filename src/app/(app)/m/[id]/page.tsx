@@ -34,7 +34,7 @@ async function Detail({ params }: { params: PageProps<"/m/[id]">["params"] }) {
       <PageHeader
         back="/"
         right={
-          <Link href={`/m/${m.id}/edit`} className="rounded-full px-3 py-1.5 text-sm font-bold text-accent active:bg-accent-soft">
+          <Link href={`/admin/m/${m.id}/edit`} className="rounded-full px-3 py-1.5 text-sm font-bold text-accent active:bg-accent-soft">
             수정
           </Link>
         }

@@ -102,3 +102,58 @@ export async function getNextPlan(today: string) {
     .maybeSingle();
   return data as Plan | null;
 }
+
+export type GalleryPhoto = {
+  id: string;
+  url: string;
+  thumbUrl: string;
+  meeting: { id: string; date: string; title: string | null; place: string | null };
+};
+
+/** 모든 사진: 만난 날 최신순 → 같은 기록 안에서는 사진 순서대로 */
+export async function getAllPhotos(): Promise<GalleryPhoto[]> {
+  const supabase = await authed();
+  const { data, error } = await supabase
+    .from("twoh_photos")
+    .select("id,path,thumb_path,position,created_at,meeting:twoh_meetings!inner(id,date,title,place)");
+  if (error) throw error;
+  type Row = {
+    id: string;
+    path: string;
+    thumb_path: string;
+    position: number;
+    created_at: string;
+    meeting: GalleryPhoto["meeting"];
+  };
+  const rows = (data as unknown as Row[]).sort(
+    (a, b) =>
+      b.meeting.date.localeCompare(a.meeting.date) ||
+      a.meeting.id.localeCompare(b.meeting.id) ||
+      a.position - b.position,
+  );
+  const urls = await signMany(supabase, rows.flatMap((r) => [r.path, r.thumb_path]));
+  return rows.map((r) => ({
+    id: r.id,
+    url: urls.get(r.path) ?? "",
+    thumbUrl: urls.get(r.thumb_path) ?? "",
+    meeting: r.meeting,
+  }));
+}
+
+export async function getAdminData() {
+  const supabase = await authed();
+  const [settings, meetings, plans] = await Promise.all([
+    supabase.from("twoh_settings").select("partner_name,start_date").maybeSingle(),
+    supabase
+      .from("twoh_meetings")
+      .select("id,date,title,place")
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase.from("twoh_plans").select("id,date,memo").order("date", { ascending: false }),
+  ]);
+  return {
+    settings: (settings.data ?? { partner_name: null, start_date: null }) as Settings,
+    meetings: (meetings.data ?? []) as { id: string; date: string; title: string | null; place: string | null }[],
+    plans: (plans.data ?? []) as Plan[],
+  };
+}
